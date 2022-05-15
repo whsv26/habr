@@ -17,15 +17,16 @@ class Feed[F[_]](source: URL)(using F: Sync[F]) {
       .evalMap(reader => F.delay((new SyndFeedInput).build(reader)))
       .map(_.getEntries.iterator.asScala)
       .flatMap(Stream.fromIterator(_, 32))
-      .evalMapFilter(entry => extractFeedItem(entry).pure)
+      .through(feedItemParser)
 
-  private def extractFeedItem(e: SyndEntry): Option[FeedItem] = {
-    val title = Option(e.getTitle)
-    val uri = Option(e.getUri).map(_.url)
-    val date = Option(e.getPublishedDate)
+  private def feedItemParser(entries: Stream[F, SyndEntry]): Stream[F, FeedItem] =
+    entries.evalMapFilter { entry =>
+      val title = Option(entry.getTitle)
+      val uri = Option(entry.getUri).map(_.url)
+      val date = Option(entry.getPublishedDate)
 
-    (title, uri, date).mapN(FeedItem.apply)
-  }
+      (title, uri, date).mapN(FeedItem.apply).pure
+    }
 }
 
 object Feed {

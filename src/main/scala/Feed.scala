@@ -12,24 +12,24 @@ import java.net.URL
 import scala.jdk.CollectionConverters.*
 
 class Feed[F[_]](source: URL)(using F: Sync[F]) {
-  def stream: Stream[F, FeedItem] =
+  def stream: Stream[F, Post] =
     Stream.resource(Resource.fromAutoCloseable(F.delay(new XmlReader(source))))
       .evalMap(reader => F.delay((new SyndFeedInput).build(reader)))
       .map(_.getEntries.iterator.asScala)
       .flatMap(Stream.fromIterator(_, 32))
       .through(feedItemParser)
 
-  private def feedItemParser(entries: Stream[F, SyndEntry]): Stream[F, FeedItem] =
+  private def feedItemParser(entries: Stream[F, SyndEntry]): Stream[F, Post] =
     entries.evalMapFilter { entry =>
       val title = Option(entry.getTitle)
       val uri = Option(entry.getUri).map(_.url)
       val date = Option(entry.getPublishedDate)
 
-      (title, uri, date).mapN(FeedItem.apply).pure
+      (title, uri, date).mapN(Post.apply).pure
     }
 }
 
 object Feed {
-  def apply[F[_]: Sync](source: URL): Stream[F, FeedItem] =
+  def apply[F[_]: Sync](source: URL): Stream[F, Post] =
     new Feed(source).stream
 }

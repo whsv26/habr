@@ -15,5 +15,6 @@ libraryDependencies ++= Seq(
   "org.jsoup" % "jsoup" % "1.14.3", // parse html
   "org.seleniumhq.selenium" % "selenium-java" % "4.1.4", // render js
   "io.github.bonigarcia" % "webdrivermanager" % "5.1.1",
+  "org.slf4j" % "slf4j-nop" % "1.7.36",
   "com.github.cb372" %% "cats-retry" % "3.1.0",
 )

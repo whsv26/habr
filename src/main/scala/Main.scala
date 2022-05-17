@@ -1,7 +1,5 @@
 package org.whsv26.habr
 
-import Scrapper.{parseCommentsQty, parseCommentsQtyOld}
-
 import cats.effect.kernel.{Resource, Temporal}
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.applicative.*
@@ -15,21 +13,27 @@ import org.openqa.selenium.{JavascriptExecutor, WebDriver}
 import retry.Sleep.sleepUsingTemporal
 
 import java.net.URL
+import java.util.logging.{Level, Logger}
 import scala.jdk.CollectionConverters.*
 
 object Main extends IOApp {
   override def run(args: List[String]) = {
     val processFeed = Feed[IO]("https://habr.com/ru/rss/news/?fl=ru".url)
       .drop(10)
-      .take(2)
+      .take(5)
+      .parEvalMap(3) { post =>
+        CommentsQtyScrapper[IO](post.link)
+          .map(PostWithComments(post, _))
+      }
+      .filter(_.comments.asInt > 0)
       .evalTap(IO.println)
-      .evalMap(post => parseCommentsQty[IO](post.link))
-      .evalTap(qty => IO.println(s"Parsed qty: $qty"))
       .compile
       .drain
 
     for {
       _ <- IO.delay(WebDriverManager.chromedriver.setup())
+      _ <- IO.delay(System.setProperty("webdriver.chrome.silentOutput", "true"))
+      _ <- IO.delay(Logger.getLogger("org.openqa.selenium").setLevel(Level.OFF))
       _ <- processFeed
     } yield (ExitCode.Success)
   }

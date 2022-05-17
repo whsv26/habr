@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   "org.http4s" %% "http4s-dsl" % "0.23.11",
   "org.http4s" %% "http4s-blaze-client" % "0.23.11",
   "org.jsoup" % "jsoup" % "1.14.3", // parse html
-  "net.sourceforge.htmlunit" % "htmlunit" % "2.61.0", // render js
+  "org.seleniumhq.selenium" % "selenium-java" % "4.1.4", // render js
+  "io.github.bonigarcia" % "webdrivermanager" % "5.1.1",
   "com.github.cb372" %% "cats-retry" % "3.1.0",
 )

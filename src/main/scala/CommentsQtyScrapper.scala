@@ -1,6 +1,6 @@
 package org.whsv26.habr
 
-import CommentsQtyScrapper.XPath
+import opaque.CommentCount
 
 import cats.Applicative
 import cats.effect.IO
@@ -17,11 +17,11 @@ import io.github.bonigarcia.wdm.WebDriverManager
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
+import org.openqa.selenium.*
 import org.openqa.selenium.By.ByClassName
 import org.openqa.selenium.chrome.{ChromeDriver, ChromeDriverLogLevel, ChromeDriverService, ChromeOptions}
 import org.openqa.selenium.interactions.{Actions, PointerInput}
 import org.openqa.selenium.support.ui.{ExpectedConditions, WebDriverWait}
-import org.openqa.selenium.*
 import retry.RetryPolicies.*
 import retry.Sleep
 import retry.syntax.all.*
@@ -42,19 +42,19 @@ class CommentsQtyScrapper[F[_]: Sleep](driver: Driver)(using F: Async[F]) {
         .map(CommentCount)
 
   private def scrapWebElement(timeout: FiniteDuration): F[Option[WebElement]] =
-    Stream.repeatEval(scroll >> findWebElement)
+    Stream.repeatEval(scroll(200) >> findWebElement)
       .metered(300.millis)
       .collectFirst { case Some(elem) => elem }
       .compile
       .toList
-      .map(_.headOption)
+      .map(elems => elems.headOption)
       .timeoutTo(timeout, None.pure)
 
-  private def scroll: F[Unit] =
-    F.blocking(driver.executeScript("window.scrollBy(0, 200)"))
+  private def scroll(pixels: Int): F[Unit] =
+    F.blocking(driver.executeScript(s"window.scrollBy(0, $pixels)"))
 
   private def findWebElement: F[Option[WebElement]] =
-    F.delay(driver.findElements(By.xpath(XPath)))
+    F.delay(driver.findElements(Selectors.CommentsCounter))
       .map(_.asScala.headOption)
 }
 
@@ -64,8 +64,4 @@ object CommentsQtyScrapper {
       new CommentsQtyScrapper[F](driver)
         .scrapCommentsQty(source)
     }
-
-  private val XPath = "/html/body/div[1]/div[1]/div[2]" +
-    "/main/div/div/div/div[1]/div" +
-    "/div[2]/div[1]/div[2]/div/div[2]/a[1]/span"
 }

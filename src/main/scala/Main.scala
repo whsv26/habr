@@ -1,5 +1,7 @@
 package org.whsv26.habr
 
+import opaque.asInt
+
 import cats.effect.kernel.{Resource, Temporal}
 import cats.effect.{ExitCode, IO, IOApp}
 import cats.syntax.applicative.*
@@ -17,10 +19,13 @@ import java.util.logging.{Level, Logger}
 import scala.jdk.CollectionConverters.*
 
 object Main extends IOApp {
+
+  val RSS = "https://habr.com/ru/rss/news/?fl=ru"
+
   override def run(args: List[String]) = {
-    val processFeed = Feed[IO]("https://habr.com/ru/rss/news/?fl=ru".url)
-      .drop(10)
-      .take(5)
+    val processFeed = Feed[IO](new URL(RSS))
+      .drop(11)
+      .take(1)
       .parEvalMap(3) { post =>
         CommentsQtyScrapper[IO](post.link)
           .map(PostWithComments(post, _))

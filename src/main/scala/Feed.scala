@@ -22,7 +22,7 @@ class Feed[F[_]](source: URL)(using F: Sync[F]) {
   private def feedItemParser(entries: Stream[F, SyndEntry]): Stream[F, Post] =
     entries.evalMapFilter { entry =>
       val title = Option(entry.getTitle)
-      val uri = Option(entry.getUri).map(_.url)
+      val uri = Option(entry.getUri).map(new URL(_))
       val date = Option(entry.getPublishedDate)
 
       (title, uri, date).mapN(Post.apply).pure

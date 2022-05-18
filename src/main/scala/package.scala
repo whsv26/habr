@@ -1,6 +1,7 @@
 package org.whsv26
 
 import org.openqa.selenium.{JavascriptExecutor, WebDriver}
+import org.whsv26.habr.opaque.CommentCount
 
 import java.net.URL
 import java.util.Date
@@ -8,16 +9,6 @@ import scala.annotation.targetName
 
 package object habr {
   type Driver = WebDriver with JavascriptExecutor
-
-  extension (v: String)
-    def url: URL = new URL(v)
-
-  opaque type CommentCount = Int
-
-  val CommentCount: Int => CommentCount = identity
-
-  extension (v: CommentCount)
-    def asInt: Int = v
 
   case class Post(
     title: String,
